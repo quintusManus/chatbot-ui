@@ -26,10 +26,16 @@ export async function POST(request: Request) {
       .from("models")
       .select("*")
       .eq("id", customModelId)
-      .single()
+      .limit(1)
+      .maybeSingle()
 
     if (!customModel) {
-      throw new Error(error.message)
+      // Suppress the specific Supabase error message
+      const suppressed = error?.message?.includes("JSON object requested, multiple (or no) rows returned")
+      if (suppressed) {
+        throw new Error("Custom model not found.")
+      }
+      throw new Error(error?.message || "Custom model not found.")
     }
 
     const custom = new OpenAI({

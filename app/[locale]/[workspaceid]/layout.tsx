@@ -54,25 +54,35 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setChatImages,
     setNewMessageFiles,
     setNewMessageImages,
-    setShowFilesDisplay
+    setShowFilesDisplay,
+    profile
   } = useContext(ChatbotUIContext)
 
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
-      const session = (await supabase.auth.getSession()).data.session
-
-      if (!session) {
-        return router.push("/login")
-      } else {
+      setError(null)
+      try {
         await fetchWorkspaceData(workspaceId)
+      } catch (err) {
+        setError("Workspace not found or inaccessible.")
+        setLoading(false)
       }
     })()
   }, [])
 
   useEffect(() => {
-    ;(async () => await fetchWorkspaceData(workspaceId))()
+    ;(async () => {
+      setError(null)
+      try {
+        await fetchWorkspaceData(workspaceId)
+      } catch (err) {
+        setError("Workspace not found or inaccessible.")
+        setLoading(false)
+      }
+    })()
 
     setUserInput("")
     setChatMessages([])
@@ -90,8 +100,9 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   const fetchWorkspaceData = async (workspaceId: string) => {
     setLoading(true)
-
+    setError(null)
     const workspace = await getWorkspaceById(workspaceId)
+    console.log('Anonymous workspace fetch result:', workspace)
     setSelectedWorkspace(workspace)
 
     const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
@@ -132,6 +143,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     const chats = await getChatsByWorkspaceId(workspaceId)
+    console.log('Anonymous chats fetch result:', chats)
     setChats(chats)
 
     const collectionData =
@@ -178,6 +190,27 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   if (loading) {
     return <Loading />
   }
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-xl text-red-500">
+        {error}
+      </div>
+    )
+  }
 
-  return <Dashboard>{children}</Dashboard>
+  // Only render sidebar, quick settings, and top-right GPT-4 Turbo preview for logged-in users
+  // If you have a Sidebar or QuickSettings component, wrap them like this:
+  // {profile && <Sidebar ... />}
+  // {profile && <QuickSettings ... />}
+  // {profile && <TopRightModelPreview ... />}
+
+  return (
+    <Dashboard>
+      {/* Hide sidebar, quick settings, and top-right model preview for anonymous users */}
+      {profile ? children : (
+        // Only render the main chat area or children for anonymous users
+        <div className="w-full h-full">{children}</div>
+      )}
+    </Dashboard>
+  )
 }

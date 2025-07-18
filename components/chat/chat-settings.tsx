@@ -19,7 +19,8 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     models,
     availableHostedModels,
     availableLocalModels,
-    availableOpenRouterModels
+    availableOpenRouterModels,
+    profile
   } = useContext(ChatbotUIContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -46,7 +47,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     })
   }, [chatSettings?.model])
 
-  if (!chatSettings) return null
+  if (!chatSettings || !profile) return null
 
   const allModels = [
     ...models.map(model => ({

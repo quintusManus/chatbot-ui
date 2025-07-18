@@ -26,6 +26,8 @@ interface QuickSettingsProps {}
 
 export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
   const { t } = useTranslation()
+  const { profile } = useContext(ChatbotUIContext)
+  if (!profile) return null
 
   useHotkey("p", () => setIsOpen(prevState => !prevState))
 

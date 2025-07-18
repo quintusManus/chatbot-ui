@@ -19,17 +19,20 @@ export async function getServerProfile() {
 
   const user = (await supabase.auth.getUser()).data.user
   if (!user) {
-    throw new Error("User not found")
+    // Anonymous: return null instead of querying for a profile
+    return null
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("user_id", user.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!profile) {
-    throw new Error("Profile not found")
+    // Just return null instead of throwing
+    return null
   }
 
   const profileWithKeys = addApiKeysToProfile(profile)

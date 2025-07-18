@@ -22,13 +22,8 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
   onSelectModel
 }) => {
-  const {
-    profile,
-    models,
-    availableHostedModels,
-    availableLocalModels,
-    availableOpenRouterModels
-  } = useContext(ChatbotUIContext)
+  const { profile, models, availableHostedModels, availableLocalModels, availableOpenRouterModels } = useContext(ChatbotUIContext)
+  if (!profile) return null
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -79,8 +74,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   const selectedModel = allModels.find(
     model => model.modelId === selectedModelId
   )
-
-  if (!profile) return null
 
   return (
     <DropdownMenu

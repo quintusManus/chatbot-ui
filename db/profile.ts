@@ -6,10 +6,11 @@ export const getProfileByUserId = async (userId: string) => {
     .from("profiles")
     .select("*")
     .eq("user_id", userId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!profile) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Profile not found.")
   }
 
   return profile
@@ -33,7 +34,8 @@ export const createProfile = async (profile: TablesInsert<"profiles">) => {
     .from("profiles")
     .insert([profile])
     .select("*")
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)
@@ -51,7 +53,8 @@ export const updateProfile = async (
     .update(profile)
     .eq("id", profileId)
     .select("*")
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)

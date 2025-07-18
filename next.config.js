@@ -27,6 +27,15 @@ module.exports = withBundleAnalyzer(
     },
     experimental: {
       serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
+    },
+    async redirects() {
+      return [
+        {
+          source: '/',
+          destination: '/ca8495a8-53e1-4de7-b8e0-8dbfad604f07/chat',
+          permanent: false,
+        },
+      ]
     }
   })
 )

@@ -9,7 +9,8 @@ export const getFileById = async (fileId: string) => {
     .from("files")
     .select("*")
     .eq("id", fileId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!file) {
     throw new Error(error.message)
@@ -29,7 +30,8 @@ export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
     `
     )
     .eq("id", workspaceId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!workspace) {
     throw new Error(error.message)
@@ -49,7 +51,8 @@ export const getFileWorkspacesByFileId = async (fileId: string) => {
     `
     )
     .eq("id", fileId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!file) {
     throw new Error(error.message)

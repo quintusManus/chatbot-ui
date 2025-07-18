@@ -12,10 +12,11 @@ export const getAssistantFilesByAssistantId = async (assistantId: string) => {
       `
     )
     .eq("id", assistantId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!assistantFiles) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Assistant file not found.")
   }
 
   return assistantFiles
@@ -30,7 +31,7 @@ export const createAssistantFile = async (
     .select("*")
 
   if (!createdAssistantFile) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Error creating assistant file.")
   }
 
   return createdAssistantFile
@@ -45,7 +46,7 @@ export const createAssistantFiles = async (
     .select("*")
 
   if (!createdAssistantFiles) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Error creating assistant files.")
   }
 
   return createdAssistantFiles

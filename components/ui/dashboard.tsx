@@ -1,5 +1,6 @@
 "use client"
 
+import { ChatbotUIContext } from "@/context/context"
 import { Sidebar } from "@/components/sidebar/sidebar"
 import { SidebarSwitcher } from "@/components/sidebar/sidebar-switcher"
 import { Button } from "@/components/ui/button"
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { ContentType } from "@/types"
 import { IconChevronCompactRight } from "@tabler/icons-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { FC, useState } from "react"
+import { FC, useContext, useState } from "react"
 import { useSelectFileHandler } from "../chat/chat-hooks/use-select-file-handler"
 import { CommandK } from "../utility/command-k"
 
@@ -28,6 +29,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
   const tabValue = searchParams.get("tab") || "chats"
 
   const { handleSelectDeviceFile } = useSelectFileHandler()
+  const { profile } = useContext(ChatbotUIContext)
 
   const [contentType, setContentType] = useState<ContentType>(
     tabValue as ContentType
@@ -70,7 +72,6 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
   return (
     <div className="flex size-full">
       <CommandK />
-
       <div
         className={cn(
           "duration-200 dark:border-none " + (showSidebar ? "border-r-2" : "")
@@ -82,7 +83,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
           width: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px"
         }}
       >
-        {showSidebar && (
+        {showSidebar && profile && (
           <Tabs
             className="flex h-full"
             value={contentType}
@@ -113,20 +114,22 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
           children
         )}
 
-        <Button
-          className={cn(
-            "absolute left-[4px] top-[50%] z-10 size-[32px] cursor-pointer"
-          )}
-          style={{
-            // marginLeft: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px",
-            transform: showSidebar ? "rotate(180deg)" : "rotate(0deg)"
-          }}
-          variant="ghost"
-          size="icon"
-          onClick={handleToggleSidebar}
-        >
-          <IconChevronCompactRight size={24} />
-        </Button>
+        {profile && (
+          <Button
+            className={cn(
+              "absolute left-[4px] top-[50%] z-10 size-[32px] cursor-pointer"
+            )}
+            style={{
+              // marginLeft: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px",
+              transform: showSidebar ? "rotate(180deg)" : "rotate(0deg)"
+            }}
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleSidebar}
+          >
+            <IconChevronCompactRight size={24} />
+          </Button>
+        )}
       </div>
     </div>
   )

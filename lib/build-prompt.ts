@@ -32,7 +32,7 @@ const buildBasePrompt = (
 
 export async function buildFinalMessages(
   payload: ChatPayload,
-  profile: Tables<"profiles">,
+  profile: Tables<"profiles"> | null,
   chatImages: MessageImage[]
 ) {
   const {
@@ -46,7 +46,7 @@ export async function buildFinalMessages(
 
   const BUILT_PROMPT = buildBasePrompt(
     chatSettings.prompt,
-    chatSettings.includeProfileContext ? profile.profile_context || "" : "",
+    chatSettings.includeProfileContext && profile ? profile.profile_context || "" : "",
     chatSettings.includeWorkspaceInstructions ? workspaceInstructions : "",
     assistant
   )

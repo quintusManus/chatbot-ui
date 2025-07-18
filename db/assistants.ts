@@ -6,7 +6,8 @@ export const getAssistantById = async (assistantId: string) => {
     .from("assistants")
     .select("*")
     .eq("id", assistantId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!assistant) {
     throw new Error(error.message)
@@ -28,7 +29,8 @@ export const getAssistantWorkspacesByWorkspaceId = async (
     `
     )
     .eq("id", workspaceId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!workspace) {
     throw new Error(error.message)
@@ -50,7 +52,8 @@ export const getAssistantWorkspacesByAssistantId = async (
     `
     )
     .eq("id", assistantId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!assistant) {
     throw new Error(error.message)

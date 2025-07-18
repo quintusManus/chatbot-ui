@@ -6,10 +6,11 @@ export const getToolById = async (toolId: string) => {
     .from("tools")
     .select("*")
     .eq("id", toolId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!tool) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Tool not found.")
   }
 
   return tool
@@ -26,10 +27,11 @@ export const getToolWorkspacesByWorkspaceId = async (workspaceId: string) => {
     `
     )
     .eq("id", workspaceId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!workspace) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Workspace not found.")
   }
 
   return workspace
@@ -46,10 +48,11 @@ export const getToolWorkspacesByToolId = async (toolId: string) => {
     `
     )
     .eq("id", toolId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!tool) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Tool not found.")
   }
 
   return tool

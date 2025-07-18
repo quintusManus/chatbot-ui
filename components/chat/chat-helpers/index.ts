@@ -38,8 +38,13 @@ export const validateChatSettings = (
     throw new Error("Model not found")
   }
 
-  if (!profile) {
-    throw new Error("Profile not found")
+  // Only require profile for providers that need user API keys (e.g., ollama/custom)
+  // For anonymous users, profile can be null
+  if (
+    (modelData.provider === "ollama" || modelData.provider === "custom") &&
+    !profile
+  ) {
+    throw new Error("Profile not found for ollama/custom model")
   }
 
   if (!selectedWorkspace) {
@@ -189,7 +194,7 @@ export const handleLocalChat = async (
 
 export const handleHostedChat = async (
   payload: ChatPayload,
-  profile: Tables<"profiles">,
+  profile: Tables<"profiles"> | null,
   modelData: LLM,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
@@ -202,7 +207,7 @@ export const handleHostedChat = async (
   setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const provider =
-    modelData.provider === "openai" && profile.use_azure_openai
+    modelData.provider === "openai" && (profile?.use_azure_openai ?? false)
       ? "azure"
       : modelData.provider
 
@@ -345,7 +350,7 @@ export const processResponse = async (
 
 export const handleCreateChat = async (
   chatSettings: ChatSettings,
-  profile: Tables<"profiles">,
+  profile: Tables<"profiles"> | null, // allow null for anonymous
   selectedWorkspace: Tables<"workspaces">,
   messageContent: string,
   selectedAssistant: Tables<"assistants">,
@@ -355,7 +360,7 @@ export const handleCreateChat = async (
   setChatFiles: React.Dispatch<React.SetStateAction<ChatFile[]>>
 ) => {
   const createdChat = await createChat({
-    user_id: profile.user_id,
+    ...(profile?.user_id ? { user_id: profile.user_id } : {}),
     workspace_id: selectedWorkspace.id,
     assistant_id: selectedAssistant?.id || null,
     context_length: chatSettings.contextLength,
@@ -371,13 +376,15 @@ export const handleCreateChat = async (
   setSelectedChat(createdChat)
   setChats(chats => [createdChat, ...chats])
 
-  await createChatFiles(
-    newMessageFiles.map(file => ({
-      user_id: profile.user_id,
-      chat_id: createdChat.id,
-      file_id: file.id
-    }))
-  )
+  if (profile?.user_id) {
+    await createChatFiles(
+      newMessageFiles.map(file => ({
+        user_id: profile.user_id,
+        chat_id: createdChat.id,
+        file_id: file.id
+      }))
+    )
+  }
 
   setChatFiles(prev => [...prev, ...newMessageFiles])
 
@@ -387,7 +394,7 @@ export const handleCreateChat = async (
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
   currentChat: Tables<"chats">,
-  profile: Tables<"profiles">,
+  profile: Tables<"profiles"> | null, // allow null for anonymous
   modelData: LLM,
   messageContent: string,
   generatedText: string,
@@ -395,16 +402,14 @@ export const handleCreateMessages = async (
   isRegeneration: boolean,
   retrievedFileItems: Tables<"file_items">[],
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setChatFileItems: React.Dispatch<
-    React.SetStateAction<Tables<"file_items">[]>
-  >,
+  setChatFileItems: React.Dispatch<React.SetStateAction<Tables<"file_items">[]>>,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedAssistant: Tables<"assistants"> | null
 ) => {
   const finalUserMessage: TablesInsert<"messages"> = {
     chat_id: currentChat.id,
     assistant_id: null,
-    user_id: profile.user_id,
+    ...(profile?.user_id ? { user_id: profile.user_id } : {}),
     content: messageContent,
     model: modelData.modelId,
     role: "user",
@@ -415,7 +420,7 @@ export const handleCreateMessages = async (
   const finalAssistantMessage: TablesInsert<"messages"> = {
     chat_id: currentChat.id,
     assistant_id: selectedAssistant?.id || null,
-    user_id: profile.user_id,
+    ...(profile?.user_id ? { user_id: profile.user_id } : {}),
     content: generatedText,
     model: modelData.modelId,
     role: "assistant",
@@ -446,12 +451,9 @@ export const handleCreateMessages = async (
 
     // Upload each image (stored in newMessageImages) for the user message to message_images bucket
     const uploadPromises = newMessageImages
-      .filter(obj => obj.file !== null)
+      .filter(obj => obj.file !== null && profile?.user_id)
       .map(obj => {
-        let filePath = `${profile.user_id}/${currentChat.id}/${
-          createdMessages[0].id
-        }/${uuidv4()}`
-
+        let filePath = `${profile!.user_id}/${currentChat.id}/$${createdMessages[0].id}/${uuidv4()}`
         return uploadMessageImage(filePath, obj.file as File).catch(error => {
           console.error(`Failed to upload image at ${filePath}:`, error)
           return null
@@ -476,15 +478,18 @@ export const handleCreateMessages = async (
       image_paths: paths
     })
 
-    const createdMessageFileItems = await createMessageFileItems(
-      retrievedFileItems.map(fileItem => {
-        return {
-          user_id: profile.user_id,
-          message_id: createdMessages[1].id,
-          file_item_id: fileItem.id
-        }
-      })
-    )
+    // Only create message file items if user_id is present
+    if (profile?.user_id) {
+      const createdMessageFileItems = await createMessageFileItems(
+        retrievedFileItems.map(fileItem => {
+          return {
+            user_id: profile.user_id,
+            message_id: createdMessages[1].id,
+            file_item_id: fileItem.id
+          }
+        })
+      )
+    }
 
     finalChatMessages = [
       ...chatMessages,

@@ -11,6 +11,15 @@ import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
+
+// Extend the Window interface to include 'toast'
+declare global {
+  interface Window {
+    toast?: {
+      error?: (msg: string) => void
+    }
+  }
+}
 import {
   createTempMessages,
   handleCreateChat,
@@ -323,7 +332,7 @@ export const useChatHandler = () => {
         } else {
           generatedText = await handleHostedChat(
             payload,
-            profile!,
+            profile,
             modelData!,
             tempAssistantChatMessage,
             isRegeneration,
@@ -341,7 +350,7 @@ export const useChatHandler = () => {
       if (!currentChat) {
         currentChat = await handleCreateChat(
           chatSettings!,
-          profile!,
+          profile || null, // allow null for anonymous
           selectedWorkspace!,
           messageContent,
           selectedAssistant!,
@@ -367,7 +376,7 @@ export const useChatHandler = () => {
       await handleCreateMessages(
         chatMessages,
         currentChat,
-        profile!,
+        profile || null, // allow null for anonymous
         modelData!,
         messageContent,
         generatedText,
@@ -386,6 +395,11 @@ export const useChatHandler = () => {
       setIsGenerating(false)
       setFirstTokenReceived(false)
       setUserInput(startingInput)
+      // Add error logging and toast for debugging
+      console.error("handleSendMessage error:", error)
+      if (typeof window !== 'undefined' && window?.toast) {
+        window.toast.error?.((error as any)?.message || String(error))
+      } // else: do nothing, suppress alert
     }
   }
 
@@ -396,7 +410,7 @@ export const useChatHandler = () => {
     if (!selectedChat) return
 
     await deleteMessagesIncludingAndAfter(
-      selectedChat.user_id,
+      selectedChat.user_id || "", // fallback to empty string for anonymous
       selectedChat.id,
       sequenceNumber
     )

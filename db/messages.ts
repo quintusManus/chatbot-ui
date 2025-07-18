@@ -6,7 +6,8 @@ export const getMessageById = async (messageId: string) => {
     .from("messages")
     .select("*")
     .eq("id", messageId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!message) {
     throw new Error("Message not found")
@@ -29,9 +30,13 @@ export const getMessagesByChatId = async (chatId: string) => {
 }
 
 export const createMessage = async (message: TablesInsert<"messages">) => {
+  // Only include user_id if it is defined
+  const { user_id, ...rest } = message
+  const insertObj = user_id ? { user_id, ...rest } : rest
+
   const { data: createdMessage, error } = await supabase
     .from("messages")
-    .insert([message])
+    .insert([insertObj])
     .select("*")
     .single()
 

@@ -6,6 +6,7 @@ export const getChatById = async (chatId: string) => {
     .from("chats")
     .select("*")
     .eq("id", chatId)
+    .limit(1)
     .maybeSingle()
 
   return chat
@@ -26,11 +27,16 @@ export const getChatsByWorkspaceId = async (workspaceId: string) => {
 }
 
 export const createChat = async (chat: TablesInsert<"chats">) => {
+  // Only include user_id if it is defined
+  const { user_id, ...rest } = chat
+  const insertObj = user_id ? { user_id, ...rest } : rest
+
   const { data: createdChat, error } = await supabase
     .from("chats")
-    .insert([chat])
+    .insert([insertObj])
     .select("*")
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)
@@ -61,7 +67,8 @@ export const updateChat = async (
     .update(chat)
     .eq("id", chatId)
     .select("*")
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)

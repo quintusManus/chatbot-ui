@@ -9,7 +9,7 @@ interface BrandProps {
 }
 
 export const Brand: FC<BrandProps> = ({ theme = "dark" }) => {
-  return (
+  /**return (
     <Link
       className="flex cursor-pointer flex-col items-center hover:opacity-50"
       href="https://www.chatbotui.com"
@@ -23,4 +23,5 @@ export const Brand: FC<BrandProps> = ({ theme = "dark" }) => {
       <div className="text-4xl font-bold tracking-wide">Chatbot UI</div>
     </Link>
   )
+    */
 }

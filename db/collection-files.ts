@@ -14,10 +14,11 @@ export const getCollectionFilesByCollectionId = async (
       `
     )
     .eq("id", collectionId)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (!collectionFiles) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Collection file not found.")
   }
 
   return collectionFiles
@@ -32,7 +33,7 @@ export const createCollectionFile = async (
     .select("*")
 
   if (!createdCollectionFile) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Error creating collection file.")
   }
 
   return createdCollectionFile
@@ -47,7 +48,7 @@ export const createCollectionFiles = async (
     .select("*")
 
   if (!createdCollectionFiles) {
-    throw new Error(error.message)
+    throw new Error(error?.message || "Error creating collection files.")
   }
 
   return createdCollectionFiles
