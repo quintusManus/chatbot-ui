@@ -7,12 +7,14 @@ export const runtime: ServerRuntime = "edge"
 export async function GET() {
   try {
     const profile = await getServerProfile()
-
-    checkApiKey(profile.openai_api_key, "OpenAI")
-
+    const openaiApiKey = profile?.openai_api_key || ""
+    const openaiOrgId = profile?.openai_organization_id
+    if (openaiApiKey) {
+      checkApiKey(openaiApiKey, "OpenAI")
+    }
     const openai = new OpenAI({
-      apiKey: profile.openai_api_key || "",
-      organization: profile.openai_organization_id
+      apiKey: openaiApiKey,
+      organization: openaiOrgId
     })
 
     const myAssistants = await openai.beta.assistants.list({
