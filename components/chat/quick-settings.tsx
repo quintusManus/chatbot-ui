@@ -26,11 +26,6 @@ interface QuickSettingsProps {}
 
 export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
   const { t } = useTranslation()
-  const { profile } = useContext(ChatbotUIContext)
-  if (!profile) return null
-
-  useHotkey("p", () => setIsOpen(prevState => !prevState))
-
   const {
     presets,
     assistants,
@@ -44,22 +39,22 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
     setChatFiles,
     setSelectedTools,
     setShowFilesDisplay,
-    selectedWorkspace
+    selectedWorkspace,
+    profile
   } = useContext(ChatbotUIContext)
-
   const inputRef = useRef<HTMLInputElement>(null)
-
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
-
+  useHotkey("p", () => setIsOpen(prevState => !prevState))
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         inputRef.current?.focus()
-      }, 100) // FIX: hacky
+      }, 100)
     }
   }, [isOpen])
+  if (!profile) return null
 
   const handleSelectQuickSetting = async (
     item: Tables<"presets"> | Tables<"assistants"> | null,

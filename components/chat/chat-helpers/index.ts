@@ -213,9 +213,12 @@ export const handleHostedChat = async (
 
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  let formattedMessages : any[] = []
+  let formattedMessages: any[] = []
   if (provider === "google") {
-    formattedMessages = await adaptMessagesForGoogleGemini(payload, draftMessages)
+    formattedMessages = await adaptMessagesForGoogleGemini(
+      payload,
+      draftMessages
+    )
   } else {
     formattedMessages = draftMessages
   }
@@ -374,9 +377,11 @@ export const handleCreateChat = async (
   })
 
   setSelectedChat(createdChat)
-  setChats(chats => [createdChat, ...chats])
+  if (createdChat) {
+    setChats(chats => [createdChat, ...chats])
+  }
 
-  if (profile?.user_id) {
+  if (profile?.user_id && createdChat) {
     await createChatFiles(
       newMessageFiles.map(file => ({
         user_id: profile.user_id,
@@ -402,7 +407,9 @@ export const handleCreateMessages = async (
   isRegeneration: boolean,
   retrievedFileItems: Tables<"file_items">[],
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setChatFileItems: React.Dispatch<React.SetStateAction<Tables<"file_items">[]>>,
+  setChatFileItems: React.Dispatch<
+    React.SetStateAction<Tables<"file_items">[]>
+  >,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedAssistant: Tables<"assistants"> | null
 ) => {

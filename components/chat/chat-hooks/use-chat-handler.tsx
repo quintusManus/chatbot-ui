@@ -365,29 +365,35 @@ export const useChatHandler = () => {
         })
 
         setChats(prevChats => {
+          if (!updatedChat) return prevChats
           const updatedChats = prevChats.map(prevChat =>
             prevChat.id === updatedChat.id ? updatedChat : prevChat
           )
 
-          return updatedChats
+          // Ensure no nulls are returned
+          return updatedChats.filter(
+            (chat): chat is typeof updatedChat => !!chat
+          )
         })
       }
 
-      await handleCreateMessages(
-        chatMessages,
-        currentChat,
-        profile || null, // allow null for anonymous
-        modelData!,
-        messageContent,
-        generatedText,
-        newMessageImages,
-        isRegeneration,
-        retrievedFileItems,
-        setChatMessages,
-        setChatFileItems,
-        setChatImages,
-        selectedAssistant
-      )
+      if (currentChat) {
+        await handleCreateMessages(
+          chatMessages,
+          currentChat,
+          profile || null, // allow null for anonymous
+          modelData!,
+          messageContent,
+          generatedText,
+          newMessageImages,
+          isRegeneration,
+          retrievedFileItems,
+          setChatMessages,
+          setChatFileItems,
+          setChatImages,
+          selectedAssistant
+        )
+      }
 
       setIsGenerating(false)
       setFirstTokenReceived(false)
@@ -397,7 +403,7 @@ export const useChatHandler = () => {
       setUserInput(startingInput)
       // Add error logging and toast for debugging
       console.error("handleSendMessage error:", error)
-      if (typeof window !== 'undefined' && window?.toast) {
+      if (typeof window !== "undefined" && window?.toast) {
         window.toast.error?.((error as any)?.message || String(error))
       } // else: do nothing, suppress alert
     }

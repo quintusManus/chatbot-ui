@@ -102,7 +102,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setLoading(true)
     setError(null)
     const workspace = await getWorkspaceById(workspaceId)
-    console.log('Anonymous workspace fetch result:', workspace)
+    console.log("Anonymous workspace fetch result:", workspace)
     setSelectedWorkspace(workspace)
 
     const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
@@ -143,7 +143,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     const chats = await getChatsByWorkspaceId(workspaceId)
-    console.log('Anonymous chats fetch result:', chats)
+    console.log("Anonymous chats fetch result:", chats)
     setChats(chats)
 
     const collectionData =
@@ -207,9 +207,11 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   return (
     <Dashboard>
       {/* Hide sidebar, quick settings, and top-right model preview for anonymous users */}
-      {profile ? children : (
+      {profile ? (
+        children
+      ) : (
         // Only render the main chat area or children for anonymous users
-        <div className="w-full h-full">{children}</div>
+        <div className="size-full">{children}</div>
       )}
     </Dashboard>
   )

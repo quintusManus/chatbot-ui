@@ -213,10 +213,7 @@ export const Message: FC<MessageProps> = ({
             </div>
           ) : (
             <div className="flex items-center space-x-3">
-              {message.role === "assistant" ? (
-                
-              null
-              ) : profile?.image_url ? (
+              {message.role === "assistant" ? null : profile?.image_url ? (
                 <Image
                   className={`size-[32px] rounded`}
                   src={profile?.image_url}

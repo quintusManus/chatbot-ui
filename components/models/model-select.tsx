@@ -22,16 +22,18 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
   onSelectModel
 }) => {
-  const { profile, models, availableHostedModels, availableLocalModels, availableOpenRouterModels } = useContext(ChatbotUIContext)
-  if (!profile) return null
-
+  const {
+    profile,
+    models,
+    availableHostedModels,
+    availableLocalModels,
+    availableOpenRouterModels
+  } = useContext(ChatbotUIContext)
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [tab, setTab] = useState<"hosted" | "local">("hosted")
-
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -39,6 +41,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       }, 100) // FIX: hacky
     }
   }, [isOpen])
+  if (!profile) return null
 
   const handleSelectModel = (modelId: LLMID) => {
     onSelectModel(modelId)

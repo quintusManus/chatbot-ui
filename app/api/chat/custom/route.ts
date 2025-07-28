@@ -31,7 +31,9 @@ export async function POST(request: Request) {
 
     if (!customModel) {
       // Suppress the specific Supabase error message
-      const suppressed = error?.message?.includes("JSON object requested, multiple (or no) rows returned")
+      const suppressed = error?.message?.includes(
+        "JSON object requested, multiple (or no) rows returned"
+      )
       if (suppressed) {
         throw new Error("Custom model not found.")
       }
