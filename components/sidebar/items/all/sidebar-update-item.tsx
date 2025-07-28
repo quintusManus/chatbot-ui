@@ -428,6 +428,11 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         image: File
       } & TablesUpdate<"assistants">
     ) => {
+      // Extract and ensure non-null user_id
+      const userId = item.user_id
+      if (!userId) {
+        throw new Error("Assistant item missing user_id")
+      }
       const { image, ...rest } = updateState
 
       const filesToAdd = selectedAssistantFiles.filter(
@@ -436,21 +441,24 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
             startingFile => startingFile.id === selectedFile.id
           )
       )
-
-      const filesToRemove = startingAssistantFiles.filter(startingFile =>
-        selectedAssistantFiles.some(
-          selectedFile => selectedFile.id === startingFile.id
-        )
+      // Determine files to remove
+      const filesToRemove = startingAssistantFiles.filter(
+        startingFile =>
+          !selectedAssistantFiles.some(
+            selectedFile => selectedFile.id === startingFile.id
+          )
       )
 
+      // Add new files
       for (const file of filesToAdd) {
         await createAssistantFile({
-          user_id: item.user_id,
+          user_id: userId,
           assistant_id: assistantId,
           file_id: file.id
         })
       }
 
+      // Remove old files
       for (const file of filesToRemove) {
         await deleteAssistantFile(assistantId, file.id)
       }
@@ -471,14 +479,16 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
           )
       )
 
+      // Add new collections
       for (const collection of collectionsToAdd) {
         await createAssistantCollection({
-          user_id: item.user_id,
+          user_id: userId,
           assistant_id: assistantId,
           collection_id: collection.id
         })
       }
 
+      // Remove old collections
       for (const collection of collectionsToRemove) {
         await deleteAssistantCollection(assistantId, collection.id)
       }
@@ -496,14 +506,16 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         )
       )
 
+      // Add new tools
       for (const tool of toolsToAdd) {
         await createAssistantTool({
-          user_id: item.user_id,
+          user_id: userId,
           assistant_id: assistantId,
           tool_id: tool.id
         })
       }
 
+      // Remove old tools
       for (const tool of toolsToRemove) {
         await deleteAssistantTool(assistantId, tool.id)
       }
