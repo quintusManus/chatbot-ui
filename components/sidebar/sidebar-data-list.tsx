@@ -167,6 +167,9 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     const updatedItem = await updateFunction(item.id, {
       folder_id: folderId
     })
+    if (!updatedItem) {
+      throw new Error(`Failed to update ${contentType}`)
+    }
 
     setStateFunction((items: any) =>
       items.map((item: any) =>
