@@ -13,6 +13,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.openai_api_key) {
+      throw new Error(
+        "OpenAI API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.openai_api_key, "OpenAI")
 
     const openai = new OpenAI({
