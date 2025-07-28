@@ -13,6 +13,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.azure_openai_api_key) {
+      throw new Error(
+        "Azure OpenAI API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.azure_openai_api_key, "Azure OpenAI")
 
     const ENDPOINT = profile.azure_openai_endpoint
