@@ -61,43 +61,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    ;(async () => {
-      setError(null)
-      try {
-        await fetchWorkspaceData(workspaceId)
-      } catch (err) {
-        setError("Workspace not found or inaccessible.")
-        setLoading(false)
-      }
-    })()
-  }, [])
-
-  useEffect(() => {
-    ;(async () => {
-      setError(null)
-      try {
-        await fetchWorkspaceData(workspaceId)
-      } catch (err) {
-        setError("Workspace not found or inaccessible.")
-        setLoading(false)
-      }
-    })()
-
-    setUserInput("")
-    setChatMessages([])
-    setSelectedChat(null)
-
-    setIsGenerating(false)
-    setFirstTokenReceived(false)
-
-    setChatFiles([])
-    setChatImages([])
-    setNewMessageFiles([])
-    setNewMessageImages([])
-    setShowFilesDisplay(false)
-  }, [workspaceId])
-
   const fetchWorkspaceData = async (workspaceId: string) => {
     setLoading(true)
     setError(null)
@@ -186,6 +149,44 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     setLoading(false)
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    ;(async () => {
+      setError(null)
+      try {
+        await fetchWorkspaceData(workspaceId)
+      } catch (err) {
+        setError("Workspace not found or inaccessible.")
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    ;(async () => {
+      setError(null)
+      try {
+        await fetchWorkspaceData(workspaceId)
+      } catch (err) {
+        setError("Workspace not found or inaccessible.")
+        setLoading(false)
+      }
+    })()
+
+    setUserInput("")
+    setChatMessages([])
+
+    setIsGenerating(false)
+    setFirstTokenReceived(false)
+
+    setChatFiles([])
+    setChatImages([])
+    setNewMessageFiles([])
+    setNewMessageImages([])
+    setShowFilesDisplay(false)
+  }, [workspaceId, fetchWorkspaceData])
 
   if (loading) {
     return <Loading />

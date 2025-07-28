@@ -28,10 +28,6 @@ export const useSelectFileHandler = () => {
 
   const [filesToAccept, setFilesToAccept] = useState(ACCEPTED_FILE_TYPES)
 
-  useEffect(() => {
-    handleFilesToAccept()
-  }, [chatSettings?.model])
-
   const handleFilesToAccept = () => {
     const model = chatSettings?.model
     const FULL_MODEL = LLM_LIST.find(llm => llm.modelId === model)
@@ -44,6 +40,10 @@ export const useSelectFileHandler = () => {
         : ACCEPTED_FILE_TYPES
     )
   }
+
+  useEffect(() => {
+    handleFilesToAccept()
+  }, [chatSettings?.model, handleFilesToAccept])
 
   const handleSelectDeviceFile = async (file: File) => {
     if (!profile || !selectedWorkspace || !chatSettings) return
@@ -63,9 +63,9 @@ export const useSelectFileHandler = () => {
           simplifiedFileType = "pdf"
         } else if (
           simplifiedFileType.includes(
-            "vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-              "docx"
-          )
+            "vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ) ||
+          simplifiedFileType.includes("docx")
         ) {
           simplifiedFileType = "docx"
         }
@@ -83,49 +83,61 @@ export const useSelectFileHandler = () => {
         // Handle docx files
         if (
           file.type.includes(
-            "vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-              "docx"
-          )
+            "vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ) ||
+          file.type.includes("docx")
         ) {
-          const arrayBuffer = await file.arrayBuffer()
-          const result = await mammoth.extractRawText({
-            arrayBuffer
-          })
+          reader.readAsArrayBuffer(file)
+          reader.onloadend = async function () {
+            try {
+              const arrayBuffer = reader.result as ArrayBuffer
+              const result = await mammoth.extractRawText({ arrayBuffer })
+              const createdFile = await createDocXFile(
+                result.value,
+                file,
+                {
+                  user_id: profile.user_id,
+                  description: "",
+                  file_path: "",
+                  name: file.name,
+                  size: file.size,
+                  tokens: 0,
+                  type: simplifiedFileType
+                },
+                selectedWorkspace.id,
+                chatSettings.embeddingsProvider
+              )
 
-          const createdFile = await createDocXFile(
-            result.value,
-            file,
-            {
-              user_id: profile.user_id,
-              description: "",
-              file_path: "",
-              name: file.name,
-              size: file.size,
-              tokens: 0,
-              type: simplifiedFileType
-            },
-            selectedWorkspace.id,
-            chatSettings.embeddingsProvider
-          )
+              setFiles(prev => [...prev, createdFile])
 
-          setFiles(prev => [...prev, createdFile])
+              setNewMessageFiles(prev =>
+                prev.map(item =>
+                  item.id === "loading"
+                    ? {
+                        id: createdFile.id,
+                        name: createdFile.name,
+                        type: createdFile.type,
+                        file: file
+                      }
+                    : item
+                )
+              )
 
-          setNewMessageFiles(prev =>
-            prev.map(item =>
-              item.id === "loading"
-                ? {
-                    id: createdFile.id,
-                    name: createdFile.name,
-                    type: createdFile.type,
-                    file: file
-                  }
-                : item
-            )
-          )
+              reader.onloadend = null
 
-          reader.onloadend = null
-
-          return
+              return
+            } catch (error: any) {
+              toast.error("Failed to upload. " + error?.message, {
+                duration: 10000
+              })
+              setNewMessageImages(prev =>
+                prev.filter(img => img.messageId !== "temp")
+              )
+              setNewMessageFiles(prev =>
+                prev.filter(file => file.id !== "loading")
+              )
+            }
+          }
         } else {
           // Use readAsArrayBuffer for PDFs and readAsText for other types
           file.type.includes("pdf")

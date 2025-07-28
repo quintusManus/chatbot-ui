@@ -13,7 +13,9 @@ export const getFileById = async (fileId: string) => {
     .maybeSingle()
 
   if (!file) {
-    throw new Error(error.message)
+    throw new Error(
+      error ? error.message : "File not found and no error message provided"
+    )
   }
 
   return file
@@ -34,7 +36,11 @@ export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
     .maybeSingle()
 
   if (!workspace) {
-    throw new Error(error.message)
+    throw new Error(
+      error
+        ? error.message
+        : "Workspace not found and no error message provided"
+    )
   }
 
   return workspace
@@ -55,7 +61,9 @@ export const getFileWorkspacesByFileId = async (fileId: string) => {
     .maybeSingle()
 
   if (!file) {
-    throw new Error(error.message)
+    throw new Error(
+      error ? error.message : "File not found and no error message provided"
+    )
   }
 
   return file

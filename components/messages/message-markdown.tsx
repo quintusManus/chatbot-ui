@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { MessageCodeBlock } from "./message-codeblock"
 import { MessageMarkdownMemoized } from "./message-markdown-memoized"
+import Image from "next/image"
 
 interface MessageMarkdownProps {
   content: string
@@ -17,8 +18,20 @@ export const MessageMarkdown: FC<MessageMarkdownProps> = ({ content }) => {
         p({ children }) {
           return <p className="mb-2 last:mb-0">{children}</p>
         },
-        img({ node, ...props }) {
-          return <img className="max-w-[67%]" {...props} />
+        img({ node, src, alt, width, height, ...props }) {
+          if (!src) return null // Ensure src is defined
+          // Remove 'ref' from props to avoid passing it to <Image>
+          const { ref, ...restProps } = props as any
+          return (
+            <Image
+              className="max-w-[67%]"
+              src={src as string}
+              alt={alt || ""}
+              width={500}
+              height={500}
+              {...restProps}
+            />
+          )
         },
         code({ node, className, children, ...props }) {
           const childArray = React.Children.toArray(children)

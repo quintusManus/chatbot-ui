@@ -20,19 +20,31 @@ export const useScroll = () => {
   const [userScrolled, setUserScrolled] = useState(false)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
+  const scrollToBottom = useCallback(() => {
+    isAutoScrolling.current = true
+
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "instant" })
+      }
+
+      isAutoScrolling.current = false
+    }, 100)
+  }, [])
+
   useEffect(() => {
     setUserScrolled(false)
 
     if (!isGenerating && userScrolled) {
       setUserScrolled(false)
     }
-  }, [isGenerating])
+  }, [isGenerating, userScrolled])
 
   useEffect(() => {
     if (isGenerating && !userScrolled) {
       scrollToBottom()
     }
-  }, [chatMessages])
+  }, [chatMessages, isGenerating, scrollToBottom])
 
   const handleScroll: UIEventHandler<HTMLDivElement> = useCallback(e => {
     const target = e.target as HTMLDivElement
@@ -58,18 +70,6 @@ export const useScroll = () => {
     if (messagesStartRef.current) {
       messagesStartRef.current.scrollIntoView({ behavior: "instant" })
     }
-  }, [])
-
-  const scrollToBottom = useCallback(() => {
-    isAutoScrolling.current = true
-
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "instant" })
-      }
-
-      isAutoScrolling.current = false
-    }, 100)
   }, [])
 
   return {

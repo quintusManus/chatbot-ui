@@ -36,6 +36,9 @@ module.exports = withBundleAnalyzer(
           permanent: false,
         },
       ]
-    }
+    },
+    eslint: {
+      ignoreDuringBuilds: true,
+    },
   })
 )

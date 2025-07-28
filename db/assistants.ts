@@ -10,7 +10,7 @@ export const getAssistantById = async (assistantId: string) => {
     .maybeSingle()
 
   if (!assistant) {
-    throw new Error(error.message)
+    throw new Error(error ? error.message : "Assistant not found")
   }
 
   return assistant
@@ -33,7 +33,7 @@ export const getAssistantWorkspacesByWorkspaceId = async (
     .maybeSingle()
 
   if (!workspace) {
-    throw new Error(error.message)
+    throw new Error(error ? error.message : "Workspace not found")
   }
 
   return workspace
@@ -56,7 +56,7 @@ export const getAssistantWorkspacesByAssistantId = async (
     .maybeSingle()
 
   if (!assistant) {
-    throw new Error(error.message)
+    throw new Error(error ? error.message : "Assistant not found")
   }
 
   return assistant

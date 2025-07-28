@@ -18,7 +18,20 @@ export async function POST(request: NextRequest) {
   try {
     const profile = await getServerProfile()
 
-    checkApiKey(profile.anthropic_api_key, "Anthropic")
+    // Ensure profile and API key exist
+    if (!profile?.anthropic_api_key) {
+      return new NextResponse(
+        JSON.stringify({
+          message:
+            "Anthropic API Key not found. Please set it in your profile settings."
+        }),
+        { status: 400 }
+      )
+    }
+
+    // Extract API key now that profile is confirmed
+    const anthropicApiKey = profile.anthropic_api_key
+    checkApiKey(anthropicApiKey, "Anthropic")
 
     let ANTHROPIC_FORMATTED_MESSAGES: any = messages.slice(1)
 
