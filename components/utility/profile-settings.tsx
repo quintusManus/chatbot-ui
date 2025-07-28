@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ChatbotUIContext } from "@/context/context"
 import {
   PROFILE_CONTEXT_MAX,
@@ -44,6 +43,8 @@ import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { ThemeSwitcher } from "./theme-switcher"
 
+// The profile context already provides typed profile data.
+
 interface ProfileSettingsProps {}
 
 export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
@@ -56,68 +57,89 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     availableOpenRouterModels
   } = useContext(ChatbotUIContext)
 
+  // Hooks must be called unconditionally
   const router = useRouter()
-
   const buttonRef = useRef<HTMLButtonElement>(null)
-
   const [isOpen, setIsOpen] = useState(false)
-
-  const [displayName, setDisplayName] = useState(profile?.display_name || "")
-  const [username, setUsername] = useState(profile?.username || "")
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? "")
+  const [username, setUsername] = useState(profile?.username ?? "")
   const [usernameAvailable, setUsernameAvailable] = useState(true)
   const [loadingUsername, setLoadingUsername] = useState(false)
   const [profileImageSrc, setProfileImageSrc] = useState(
-    profile?.image_url || ""
+    profile?.image_url ?? ""
   )
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [profileInstructions, setProfileInstructions] = useState(
-    profile?.profile_context || ""
+    profile?.profile_context ?? ""
   )
-
   const [useAzureOpenai, setUseAzureOpenai] = useState(
-    profile?.use_azure_openai
+    profile?.use_azure_openai ?? false
   )
   const [openaiAPIKey, setOpenaiAPIKey] = useState(
-    profile?.openai_api_key || ""
+    profile?.openai_api_key ?? ""
   )
   const [openaiOrgID, setOpenaiOrgID] = useState(
-    profile?.openai_organization_id || ""
+    profile?.openai_organization_id ?? ""
   )
   const [azureOpenaiAPIKey, setAzureOpenaiAPIKey] = useState(
-    profile?.azure_openai_api_key || ""
+    profile?.azure_openai_api_key ?? ""
   )
   const [azureOpenaiEndpoint, setAzureOpenaiEndpoint] = useState(
-    profile?.azure_openai_endpoint || ""
+    profile?.azure_openai_endpoint ?? ""
   )
   const [azureOpenai35TurboID, setAzureOpenai35TurboID] = useState(
-    profile?.azure_openai_35_turbo_id || ""
+    profile?.azure_openai_35_turbo_id ?? ""
   )
   const [azureOpenai45TurboID, setAzureOpenai45TurboID] = useState(
-    profile?.azure_openai_45_turbo_id || ""
+    profile?.azure_openai_45_turbo_id ?? ""
   )
   const [azureOpenai45VisionID, setAzureOpenai45VisionID] = useState(
-    profile?.azure_openai_45_vision_id || ""
+    profile?.azure_openai_45_vision_id ?? ""
   )
   const [azureEmbeddingsID, setAzureEmbeddingsID] = useState(
-    profile?.azure_openai_embeddings_id || ""
+    profile?.azure_openai_embeddings_id ?? ""
   )
   const [anthropicAPIKey, setAnthropicAPIKey] = useState(
-    profile?.anthropic_api_key || ""
+    profile?.anthropic_api_key ?? ""
   )
   const [googleGeminiAPIKey, setGoogleGeminiAPIKey] = useState(
-    profile?.google_gemini_api_key || ""
+    profile?.google_gemini_api_key ?? ""
   )
   const [mistralAPIKey, setMistralAPIKey] = useState(
-    profile?.mistral_api_key || ""
+    profile?.mistral_api_key ?? ""
   )
-  const [groqAPIKey, setGroqAPIKey] = useState(profile?.groq_api_key || "")
+  const [groqAPIKey, setGroqAPIKey] = useState(profile?.groq_api_key ?? "")
   const [perplexityAPIKey, setPerplexityAPIKey] = useState(
-    profile?.perplexity_api_key || ""
+    profile?.perplexity_api_key ?? ""
+  )
+  const [openrouterAPIKey, setOpenrouterAPIKey] = useState(
+    profile?.openrouter_api_key ?? ""
   )
 
-  const [openrouterAPIKey, setOpenrouterAPIKey] = useState(
-    profile?.openrouter_api_key || ""
-  )
+  // Hook: prepare export data callback
+  const handleExportData = useCallback(async () => {
+    if (!profile) {
+      toast.error("Failed to export data.")
+      return
+    }
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, display_name, username, email, created_at, updated_at")
+      .eq("id", profile.id)
+      .single()
+
+    if (error) {
+      toast.error("Failed to export data.")
+      return
+    }
+
+    exportLocalStorageAsJSON()
+  }, [profile])
+
+  // If no profile, do not render settings
+  if (!profile) {
+    return null
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -177,21 +199,6 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     }
   }
 
-  const handleExportData = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, display_name, username, email, created_at, updated_at")
-      .eq("id", profile?.id)
-      .single()
-
-    if (error) {
-      toast.error("Failed to export data.")
-      return
-    }
-
-    exportLocalStorageAsJSON(data)
-  }, [profile?.id])
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -212,8 +219,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               maxLength={PROFILE_DISPLAY_NAME_MAX}
             />
             <LimitDisplay
-              currentLength={displayName.length}
-              maxLength={PROFILE_DISPLAY_NAME_MAX}
+              used={displayName.length}
+              limit={PROFILE_DISPLAY_NAME_MAX}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -228,31 +235,25 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               />
               {username.length > 0 && (
                 <WithTooltip
-                  tooltip={
-                    usernameAvailable
-                      ? "Username is available!"
-                      : "Username is not available."
+                  display={
+                    usernameAvailable ? (
+                      <span>Username is available!</span>
+                    ) : (
+                      <span>Username is not available.</span>
+                    )
                   }
-                  position="top"
-                >
-                  {usernameAvailable ? (
-                    <IconCircleCheckFilled
-                      className="size-5 text-green-500"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <IconCircleXFilled
-                      className="size-5 text-red-500"
-                      aria-hidden="true"
-                    />
-                  )}
-                </WithTooltip>
+                  trigger={
+                    usernameAvailable ? (
+                      <IconCircleCheckFilled className="text-green-500" />
+                    ) : (
+                      <IconCircleXFilled className="text-red-500" />
+                    )
+                  }
+                  side="top"
+                />
               )}
             </div>
-            <LimitDisplay
-              currentLength={username.length}
-              maxLength={PROFILE_USERNAME_MAX}
-            />
+            <LimitDisplay used={username.length} limit={PROFILE_USERNAME_MAX} />
             {loadingUsername && (
               <div className="flex items-center gap-2">
                 <IconLoader2 className="size-5 animate-spin" />
@@ -263,44 +264,29 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              value={profile?.email}
-              onChange={e => setProfile({ ...profile, email: e.target.value })}
-              placeholder="Enter your email"
-              disabled
-            />
-          </div>
-          <div className="flex flex-col gap-2">
             <Label htmlFor="profile-image">Profile Image</Label>
             <ImagePicker
-              id="profile-image"
-              imageSrc={profileImageSrc}
-              onImageUpload={(file, url) => {
-                setProfileImageFile(file)
-                setProfileImageSrc(url)
-              }}
-              onRemoveImage={() => {
-                setProfileImageFile(null)
-                setProfileImageSrc("")
-              }}
+              image={profileImageFile}
+              src={profileImageSrc}
+              onSrcChange={url => setProfileImageSrc(url)}
+              onImageChange={file => setProfileImageFile(file)}
+              width={SIDEBAR_ICON_SIZE}
+              height={SIDEBAR_ICON_SIZE}
             />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="profile-instructions">Profile Instructions</Label>
             <TextareaAutosize
-              id="profile-instructions"
               value={profileInstructions}
-              onChange={e => setProfileInstructions(e.target.value)}
-              placeholder="Enter your profile instructions"
+              onValueChange={val => setProfileInstructions(val)}
+              placeholder="Enter profile instructions"
               minRows={3}
               maxLength={PROFILE_CONTEXT_MAX}
               className="resize-none"
             />
             <LimitDisplay
-              currentLength={profileInstructions.length}
-              maxLength={PROFILE_CONTEXT_MAX}
+              used={profileInstructions.length}
+              limit={PROFILE_CONTEXT_MAX}
             />
           </div>
         </div>
@@ -463,11 +449,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
             <div className="flex flex-col gap-2">
               <Label htmlFor="env-key-map">Environment Key Map</Label>
               <TextareaAutosize
-                id="env-key-map"
                 value={JSON.stringify(envKeyMap, null, 2)}
-                onChange={e =>
-                  setAvailableHostedModels(JSON.parse(e.target.value))
-                }
+                onValueChange={val => setAvailableHostedModels(JSON.parse(val))}
                 placeholder="Enter your environment key map"
                 minRows={3}
                 className="resize-none"
@@ -476,10 +459,9 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
             <div className="flex flex-col gap-2">
               <Label htmlFor="open-router-models">OpenRouter Models</Label>
               <TextareaAutosize
-                id="open-router-models"
                 value={JSON.stringify(availableOpenRouterModels, null, 2)}
-                onChange={e =>
-                  setAvailableOpenRouterModels(JSON.parse(e.target.value))
+                onValueChange={val =>
+                  setAvailableOpenRouterModels(JSON.parse(val))
                 }
                 placeholder="Enter your OpenRouter models"
                 minRows={3}

@@ -22,20 +22,19 @@ export async function POST(request: Request) {
   let openaiApiKey = null
   let openaiOrgId = undefined
   try {
-    // Try to get user profile, but allow anonymous fallback
-    try {
-      const mod = await import("@/lib/server/server-chat-helpers")
-      profile = await mod.getServerProfile()
-      openaiApiKey =
-        profile && profile.openai_api_key ? profile.openai_api_key : null
-      openaiOrgId = profile ? profile.openai_organization_id : undefined
-    } catch (e) {
-      // Anonymous: fallback to env
+    // Attempt to read user profile; if none, fall back to environment
+    const mod = await import("@/lib/server/server-chat-helpers")
+    profile = await mod.getServerProfile()
+    if (profile) {
+      openaiApiKey = profile.openai_api_key || null
+      openaiOrgId = profile.openai_organization_id || undefined
+    } else {
       openaiApiKey = process.env.OPENAI_API_KEY || null
-      openaiOrgId = process.env.OPENAI_ORGANIZATION_ID
+      openaiOrgId = process.env.OPENAI_ORGANIZATION_ID || undefined
     }
 
-    if (!openaiApiKey) {
+    // Only require a key if there's a logged-in profile
+    if (profile !== null && !openaiApiKey) {
       checkApiKey(openaiApiKey, "OpenAI")
     }
 

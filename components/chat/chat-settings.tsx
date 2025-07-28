@@ -45,7 +45,12 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
         CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_CONTEXT_LENGTH || 4096
       )
     })
-  }, [chatSettings?.model])
+  }, [
+    chatSettings?.model,
+    chatSettings?.temperature,
+    chatSettings?.contextLength,
+    setChatSettings
+  ])
 
   if (!chatSettings || !profile) return null
 

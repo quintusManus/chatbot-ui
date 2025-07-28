@@ -17,7 +17,7 @@ import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 import { LLMID } from "@/types"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ReactNode, useContext, useEffect, useState } from "react"
+import { ReactNode, useContext, useEffect, useState, useCallback } from "react"
 import Loading from "../loading"
 
 interface WorkspaceLayoutProps {
@@ -61,116 +61,122 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchWorkspaceData = async (workspaceId: string) => {
-    setLoading(true)
-    setError(null)
-    const workspace = await getWorkspaceById(workspaceId)
-    console.log("Anonymous workspace fetch result:", workspace)
-    setSelectedWorkspace(workspace)
+  const fetchWorkspaceData = useCallback(
+    async (workspaceId: string) => {
+      setLoading(true)
+      setError(null)
+      const workspace = await getWorkspaceById(workspaceId)
+      console.log("Anonymous workspace fetch result:", workspace)
+      setSelectedWorkspace(workspace)
 
-    const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
-    setAssistants(assistantData.assistants)
+      const assistantData =
+        await getAssistantWorkspacesByWorkspaceId(workspaceId)
+      setAssistants(assistantData.assistants)
 
-    for (const assistant of assistantData.assistants) {
-      let url = ""
+      for (const assistant of assistantData.assistants) {
+        let url = ""
 
-      if (assistant.image_path) {
-        url = (await getAssistantImageFromStorage(assistant.image_path)) || ""
+        if (assistant.image_path) {
+          url = (await getAssistantImageFromStorage(assistant.image_path)) || ""
+        }
+
+        if (url) {
+          const response = await fetch(url)
+          const blob = await response.blob()
+          const base64 = await convertBlobToBase64(blob)
+
+          setAssistantImages(prev => [
+            ...prev,
+            {
+              assistantId: assistant.id,
+              path: assistant.image_path,
+              base64,
+              url
+            }
+          ])
+        } else {
+          setAssistantImages(prev => [
+            ...prev,
+            {
+              assistantId: assistant.id,
+              path: assistant.image_path,
+              base64: "",
+              url
+            }
+          ])
+        }
       }
 
-      if (url) {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const base64 = await convertBlobToBase64(blob)
+      const chats = await getChatsByWorkspaceId(workspaceId)
+      console.log("Anonymous chats fetch result:", chats)
+      setChats(chats)
 
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64,
-            url
-          }
-        ])
-      } else {
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64: "",
-            url
-          }
-        ])
-      }
-    }
+      const collectionData =
+        await getCollectionWorkspacesByWorkspaceId(workspaceId)
+      setCollections(collectionData.collections)
 
-    const chats = await getChatsByWorkspaceId(workspaceId)
-    console.log("Anonymous chats fetch result:", chats)
-    setChats(chats)
+      const folders = await getFoldersByWorkspaceId(workspaceId)
+      setFolders(folders)
 
-    const collectionData =
-      await getCollectionWorkspacesByWorkspaceId(workspaceId)
-    setCollections(collectionData.collections)
+      const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
+      setFiles(fileData.files)
 
-    const folders = await getFoldersByWorkspaceId(workspaceId)
-    setFolders(folders)
+      const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
+      setPresets(presetData.presets)
 
-    const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
-    setFiles(fileData.files)
+      const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
+      setPrompts(promptData.prompts)
 
-    const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
-    setPresets(presetData.presets)
+      const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
+      setTools(toolData.tools)
 
-    const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
-    setPrompts(promptData.prompts)
+      const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
+      setModels(modelData.models)
 
-    const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
-    setTools(toolData.tools)
+      setChatSettings({
+        model: (searchParams.get("model") ||
+          workspace?.default_model ||
+          "gpt-4-1106-preview") as LLMID,
+        prompt:
+          workspace?.default_prompt ||
+          "You are a friendly, helpful AI assistant.",
+        temperature: workspace?.default_temperature || 0.5,
+        contextLength: workspace?.default_context_length || 4096,
+        includeProfileContext: workspace?.include_profile_context || true,
+        includeWorkspaceInstructions:
+          workspace?.include_workspace_instructions || true,
+        embeddingsProvider:
+          (workspace?.embeddings_provider as "openai" | "local") || "openai"
+      })
 
-    const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
-    setModels(modelData.models)
+      setLoading(false)
+    },
+    [searchParams]
+  )
 
-    setChatSettings({
-      model: (searchParams.get("model") ||
-        workspace?.default_model ||
-        "gpt-4-1106-preview") as LLMID,
-      prompt:
-        workspace?.default_prompt ||
-        "You are a friendly, helpful AI assistant.",
-      temperature: workspace?.default_temperature || 0.5,
-      contextLength: workspace?.default_context_length || 4096,
-      includeProfileContext: workspace?.include_profile_context || true,
-      includeWorkspaceInstructions:
-        workspace?.include_workspace_instructions || true,
-      embeddingsProvider:
-        (workspace?.embeddings_provider as "openai" | "local") || "openai"
-    })
-
-    setLoading(false)
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     ;(async () => {
       setError(null)
       try {
         await fetchWorkspaceData(workspaceId)
       } catch (err) {
-        setError("Workspace not found or inaccessible.")
+        if (profile) {
+          setError("Workspace not found or inaccessible.")
+        }
         setLoading(false)
       }
     })()
-  }, [])
+  }, [workspaceId, fetchWorkspaceData])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     ;(async () => {
       setError(null)
       try {
         await fetchWorkspaceData(workspaceId)
       } catch (err) {
-        setError("Workspace not found or inaccessible.")
+        if (profile) {
+          setError("Workspace not found or inaccessible.")
+        }
         setLoading(false)
       }
     })()
