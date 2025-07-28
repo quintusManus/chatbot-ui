@@ -373,7 +373,11 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       collectionId: string,
       updateState: TablesUpdate<"assistants">
     ) => {
-      if (!profile) return
+      // Extract and ensure user_id is present
+      const userId = item.user_id
+      if (!userId) {
+        throw new Error("Collection item missing user_id")
+      }
 
       const { ...rest } = updateState
 
@@ -383,21 +387,23 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
             startingFile => startingFile.id === selectedFile.id
           )
       )
-
-      const filesToRemove = startingCollectionFiles.filter(startingFile =>
-        selectedCollectionFiles.some(
-          selectedFile => selectedFile.id === startingFile.id
-        )
+      const filesToRemove = startingCollectionFiles.filter(
+        startingFile =>
+          !selectedCollectionFiles.some(
+            selectedFile => selectedFile.id === startingFile.id
+          )
       )
 
+      // Add new files to collection
       for (const file of filesToAdd) {
         await createCollectionFile({
-          user_id: item.user_id,
+          user_id: userId,
           collection_id: collectionId,
           file_id: file.id
         })
       }
 
+      // Remove deselected files from collection
       for (const file of filesToRemove) {
         await deleteCollectionFile(collectionId, file.id)
       }
