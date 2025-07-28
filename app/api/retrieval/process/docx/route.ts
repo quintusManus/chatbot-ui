@@ -23,6 +23,9 @@ export async function POST(req: Request) {
     )
 
     const profile = await getServerProfile()
+    if (!profile) {
+      throw new Error("Server profile not found")
+    }
 
     if (embeddingsProvider === "openai") {
       if (profile.use_azure_openai) {

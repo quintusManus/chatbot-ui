@@ -21,6 +21,9 @@ export async function POST(req: Request) {
     )
 
     const profile = await getServerProfile()
+    if (!profile) {
+      throw new Error("Server profile not found")
+    }
 
     const formData = await req.formData()
 

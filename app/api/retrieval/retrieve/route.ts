@@ -22,11 +22,24 @@ export async function POST(request: Request) {
     )
 
     const profile = await getServerProfile()
+    if (!profile) {
+      throw new Error("Server profile not found")
+    }
 
     if (embeddingsProvider === "openai") {
       if (profile.use_azure_openai) {
+        if (!profile.azure_openai_api_key) {
+          throw new Error(
+            "Azure OpenAI API Key not found. Please set it in your profile settings."
+          )
+        }
         checkApiKey(profile.azure_openai_api_key, "Azure OpenAI")
       } else {
+        if (!profile.openai_api_key) {
+          throw new Error(
+            "OpenAI API Key not found. Please set it in your profile settings."
+          )
+        }
         checkApiKey(profile.openai_api_key, "OpenAI")
       }
     }
