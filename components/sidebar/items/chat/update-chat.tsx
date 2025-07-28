@@ -28,9 +28,10 @@ export const UpdateChat: FC<UpdateChatProps> = ({ chat }) => {
   const [name, setName] = useState(chat.name)
 
   const handleUpdateChat = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    const updatedChat = await updateChat(chat.id, {
-      name
-    })
+    const updatedChat = await updateChat(chat.id, { name })
+    if (!updatedChat) {
+      throw new Error("Failed to update chat")
+    }
     setChats(prevState =>
       prevState.map(c => (c.id === chat.id ? updatedChat : c))
     )
