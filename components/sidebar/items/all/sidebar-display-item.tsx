@@ -57,6 +57,9 @@ export const SidebarItem: FC<SidebarItemProps> = ({
         embeddings_provider: assistant.embeddings_provider
       })
 
+      if (!createdChat) {
+        throw new Error("Failed to create chat")
+      }
       setChats(prevState => [createdChat, ...prevState])
       setSelectedAssistant(assistant)
 
