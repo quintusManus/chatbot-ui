@@ -16,6 +16,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.mistral_api_key) {
+      throw new Error(
+        "Mistral API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.mistral_api_key, "Mistral")
 
     // Mistral is compatible the OpenAI SDK

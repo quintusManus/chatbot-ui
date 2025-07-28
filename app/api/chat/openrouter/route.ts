@@ -17,6 +17,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.openrouter_api_key) {
+      throw new Error(
+        "OpenRouter API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.openrouter_api_key, "OpenRouter")
 
     const openai = new OpenAI({

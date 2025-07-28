@@ -14,6 +14,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.google_gemini_api_key) {
+      throw new Error(
+        "Google Gemini API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.google_gemini_api_key, "Google")
 
     const genAI = new GoogleGenerativeAI(profile.google_gemini_api_key || "")

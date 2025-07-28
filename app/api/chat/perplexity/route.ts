@@ -15,6 +15,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
+    if (!profile || !profile.perplexity_api_key) {
+      throw new Error(
+        "Perplexity API Key not found. Please set it in your profile settings."
+      )
+    }
+
     checkApiKey(profile.perplexity_api_key, "Perplexity")
 
     // Perplexity is compatible the OpenAI SDK
